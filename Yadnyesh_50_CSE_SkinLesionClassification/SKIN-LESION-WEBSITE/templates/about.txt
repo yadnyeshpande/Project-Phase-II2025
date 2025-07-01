@@ -1,0 +1,426 @@
+
+
+from flask import Flask, render_template, request, send_file, session, redirect, url_for
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+import numpy as np
+import os
+import io
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Load trained model and class labels
+model = load_model('model/resnet50_skin_best.h5')
+class_labels = ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
+
+# Home route
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# About route
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+# Prediction route
+@app.route('/predict', methods=['GET', 'POST'])
+def predict():
+    if request.method == 'POST':
+        files = request.files.getlist('images')
+        patient_name = request.form.get('patient_name')
+        patient_age = request.form.get('patient_age')
+        blood_group = request.form.get('blood_group')
+        results = []
+
+        for file in files:
+            if file:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+
+                # Preprocess image
+                img = image.load_img(file_path, target_size=(224, 224))
+                img_array = image.img_to_array(img)
+                img_array = np.expand_dims(img_array, axis=0)
+                img_array = img_array / 255.0
+
+                # Predict
+                prediction = model.predict(img_array)
+                predicted_class = class_labels[np.argmax(prediction)]
+                confidence = float(np.max(prediction)) * 100
+
+                results.append({
+                    'label': predicted_class,
+                    'confidence': round(confidence, 2),
+                    'image': filename
+                })
+
+        # Store results and patient info in session
+        session['report_data'] = {
+            'name': patient_name,
+            'age': patient_age,
+            'blood_group': blood_group,
+            'predictions': results
+        }
+
+        return render_template('predict.html', results=results)
+
+    return render_template('predict.html')
+
+# Download PDF report route
+@app.route('/download_report')
+def download_report():
+    data = session.get('report_data')
+    if not data:
+        return redirect(url_for('predict'))
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    y = height - 50
+
+    # Title
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(50, y, "Skin Lesion Detection Report")
+    y -= 40
+
+    # Patient Info
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(50, y, f"Patient Name: {data['name']}")
+    y -= 20
+    pdf.drawString(50, y, f"Age: {data['age']}")
+    y -= 20
+    pdf.drawString(50, y, f"Blood Group: {data['blood_group']}")
+    y -= 30
+
+    # Table Headers
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Predicted Disease")
+    pdf.drawString(300, y, "Confidence (%)")
+    y -= 20
+
+    # Prediction Results
+    pdf.setFont("Helvetica", 12)
+    for item in data['predictions']:
+        if y < 80:
+            pdf.showPage()
+            y = height - 50
+
+        pdf.drawString(50, y, item['label'])
+        pdf.drawString(300, y, f"{item['confidence']}%")
+        y -= 20
+
+    pdf.save()
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name="prediction_report.pdf", mimetype='application/pdf')
+
+# Run app
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skin Lesion Prediction</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .nav-link:hover { color: #3b82f6; transition: color 0.3s ease; }
+    .section-content { animation: fadeIn 1s ease-in-out; }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    .predict-btn:hover {
+      background-color: #2563eb;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex-shrink-0">
+          <a href="{{ url_for('home') }}" class="text-2xl font-bold text-blue-600">Skin Lesion Detection</a>
+        </div>
+        <div class="hidden md:flex space-x-8">
+          <a href="{{ url_for('home') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">Home</a>
+          <a href="{{ url_for('about') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">About</a>
+          <a href="{{ url_for('predict') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">Prediction</a>
+        </div>
+        <!-- Mobile Menu Button -->
+        <div class="md:hidden">
+          <button id="mobile-menu-button" class="text-gray-700 hover:text-blue-500 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white shadow-md">
+      <div class="px-4 pt-2 pb-3 space-y-1">
+        <a href="{{ url_for('home') }}" class="block text-gray-700 hover:text-blue-500 font-medium">Home</a>
+        <a href="{{ url_for('about') }}" class="block text-gray-700 hover:text-blue-500 font-medium">About</a>
+        <a href="{{ url_for('predict') }}" class="block text-gray-700 hover:text-blue-500 font-medium">Prediction</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Prediction Section -->
+  <section class="py-16">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="section-content bg-white rounded-lg p-8 shadow-md card-hover">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-6">Upload Images for Prediction</h1>
+        <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+          <input type="text" name="patient_name" placeholder="Patient Name" required class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="number" name="patient_age" placeholder="Age" required class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="text" name="blood_group" placeholder="Blood Group" required class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="file" name="images" multiple required class="p-3 border border-gray-300 rounded-lg bg-white cursor-pointer">
+          <input type="submit" value="Predict" class="predict-btn p-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition cursor-pointer">
+        </form>
+
+        {% if results %}
+          <div class="mt-8 bg-green-50 border-l-4 border-green-500 rounded-lg p-6">
+            {% for result in results %}
+              <div class="mb-6 last:mb-0">
+                <h2 class="text-xl font-semibold text-gray-800">Prediction: <span class="text-green-600 font-bold">{{ result.label }}</span></h2>
+                <h3 class="text-lg text-gray-600">Confidence: <span class="text-green-600 font-bold">{{ result.confidence }}%</span></h3>
+                <img src="{{ url_for('static', filename='uploads/' ~ result.image) }}" alt="Uploaded Image" class="mt-4 w-full h-auto rounded-lg border border-gray-300">
+                <a href="{{ url_for('download_report') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">Download PDF Report</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+          <ul class="space-y-2">
+            <li><a href="{{ url_for('home') }}" class="hover:text-blue-400 transition">Home</a></li>
+            <li><a href="{{ url_for('about') }}" class="hover:text-blue-400 transition">About</a></li>
+            <li><a href="{{ url_for('predict') }}" class="hover:text-blue-400 transition">Prediction</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Contact Info</h3>
+          <p class="flex items-center mb-2"><span class="mr-2">📧</span> Demo@Gmail.Com</p>
+          <p class="flex items-center mb-2"><span class="mr-2">📍</span> Nanded, India - 400104</p>
+          <p class="flex items-center mb-2"><span class="mr-2">📞</span> +860-008-1776</p>
+          <p class="flex items-center"><span class="mr-2">📞</span> +914-655-7166</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
+          <p class="flex items-center mb-2"><span class="mr-2">📷</span> <a href="#" class="hover:text-blue-400 transition">Instagram</a></p>
+          <p class="flex items-center mb-2"><span class="mr-2">📘</span> <a href="#" class="hover:text-blue-400 transition">Facebook</a></p>
+          <p class="flex items-center"><span class="mr-2">🐦</span> <a href="#" class="hover:text-blue-400 transition">Twitter</a></p>
+        </div>
+      </div>
+      <div class="mt-8 text-center text-gray-400">
+        <p>© 2025 Skin Lesion Detection. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript for Mobile Menu Toggle -->
+  <script>
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    document.querySelector('form').addEventListener('submit', function (e) {
+    const name = document.querySelector('input[name="patient_name"]').value.trim();
+    const age = document.querySelector('input[name="patient_age"]').value.trim();
+
+    // 1. Patient Name
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!nameRegex.test(name)) {
+      alert("Please enter a valid patient name (letters only).");
+      e.preventDefault(); 
+      return;
+    }
+
+    // 2. Age
+    const ageRegex = /^[1-9][0-9]*$/; 
+    if (!ageRegex.test(age)) {
+      alert("Please enter a valid positive age (numbers only).");
+      e.preventDefault();
+      return;
+    }
+
+    
+  });
+  </script>
+</body>
+</html>
+
+vgg16_skin_best.h5
+
+
+
+from flask import Flask, render_template, request, send_file, session, redirect, url_for
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+import numpy as np
+import os
+import io
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Load trained model and class labels
+model = load_model('model/resnet50_skin_best.h5')
+class_labels = ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
+CONFIDENCE_THRESHOLD = 70  # 👈 You can adjust this value if needed
+
+# Home route
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# About route
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+# Prediction route
+@app.route('/predict', methods=['GET', 'POST'])
+def predict():
+    if request.method == 'POST':
+        files = request.files.getlist('images')
+        patient_name = request.form.get('patient_name')
+        patient_age = request.form.get('patient_age')
+        blood_group = request.form.get('blood_group')
+        results = []
+
+        for file in files:
+            if file:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+
+                # Preprocess image
+                img = image.load_img(file_path, target_size=(224, 224))
+                img_array = image.img_to_array(img)
+                img_array = np.expand_dims(img_array, axis=0)
+                img_array = img_array / 255.0
+
+                # Predict
+                prediction = model.predict(img_array)
+                confidence = float(np.max(prediction)) * 100
+                predicted_index = np.argmax(prediction)
+
+                # ✅ Check confidence threshold
+                if confidence < CONFIDENCE_THRESHOLD:
+                    predicted_class = "Unknown / Not a skin lesion"
+                else:
+                    predicted_class = class_labels[predicted_index]
+
+                results.append({
+                    'label': predicted_class,
+                    'confidence': round(confidence, 2),
+                    'image': filename
+                })
+
+        # Store results and patient info in session
+        session['report_data'] = {
+            'name': patient_name,
+            'age': patient_age,
+            'blood_group': blood_group,
+            'predictions': results
+        }
+
+        return render_template('predict.html', results=results)
+
+    return render_template('predict.html')
+
+# Download PDF report route
+@app.route('/download_report')
+def download_report():
+    data = session.get('report_data')
+    if not data:
+        return redirect(url_for('predict'))
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    y = height - 50
+
+    # Title
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(50, y, "Skin Lesion Detection Report")
+    y -= 40
+
+    # Patient Info
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(50, y, f"Patient Name: {data['name']}")
+    y -= 20
+    pdf.drawString(50, y, f"Age: {data['age']}")
+    y -= 20
+    pdf.drawString(50, y, f"Blood Group: {data['blood_group']}")
+    y -= 30
+
+    # Table Headers
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Predicted Disease")
+    pdf.drawString(300, y, "Confidence (%)")
+    y -= 20
+
+    # Prediction Results
+    pdf.setFont("Helvetica", 12)
+    for item in data['predictions']:
+        if y < 80:
+            pdf.showPage()
+            y = height - 50
+
+        pdf.drawString(50, y, item['label'])
+        pdf.drawString(300, y, f"{item['confidence']}%")
+        y -= 20
+
+    pdf.save()
+    buffer.seek(0)
+
+    return send_file(buffer, as_attachment=True, download_name="prediction_report.pdf", mimetype='application/pdf')
+
+# Run app
+if __name__ == '__main__':
+    app.run(debug=True)

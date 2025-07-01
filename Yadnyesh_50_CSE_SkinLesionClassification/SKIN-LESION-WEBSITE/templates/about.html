@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Us</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+    .nav-link:hover {
+      color: #3b82f6;
+      transition: color 0.3s ease;
+    }
+    .section-content {
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex-shrink-0">
+          <a href="{{ url_for('home') }}" class="text-2xl font-bold text-blue-600">Skin Lesion Detection</a>
+        </div>
+        <div class="hidden md:flex space-x-8">
+          <a href="{{ url_for('home') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">Home</a>
+          <a href="{{ url_for('about') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">About</a>
+          <a href="{{ url_for('predict') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">Prediction</a>
+        </div>
+        <div class="md:hidden">
+          <button id="mobile-menu-button" class="text-gray-700 hover:text-blue-500 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-white shadow-md">
+      <div class="px-4 pt-2 pb-3 space-y-1">
+        <a href="{{ url_for('home') }}" class="block text-gray-700 hover:text-blue-500 font-medium">Home</a>
+        <a href="{{ url_for('about') }}" class="block text-gray-700 hover:text-blue-500 font-medium">About</a>
+        <a href="{{ url_for('predict') }}" class="block text-gray-700 hover:text-blue-500 font-medium">Prediction</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- About Us Section -->
+  <section class="py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Project Overview -->
+      <div class="section-content bg-white border-2 border-blue-500 rounded-lg p-6 mb-8 card-hover">
+        <h2 class="text-2xl md:text-3xl font-bold text-blue-600 text-center mb-4">Vision</h2>
+        <p class="text-gray-600 leading-relaxed">
+          Our vision is to create a world where technology bridges the gap between early diagnosis and timely treatment of skin diseases. We aim to become a global leader in AI-driven dermatology by delivering intelligent, user-friendly tools that enable both healthcare professionals and individuals to detect skin conditions accurately and effortlessly. Through continuous innovation and scientific research, we envision a future where preventable skin conditions are identified early, treatment is accessible, and skin health is prioritized for all communities, regardless of location or resources.
+        </p>
+      </div>
+
+      <!-- Project Objective -->
+      <div id="project-objective" class="section-content bg-green-50 border-2 border-green-500 rounded-lg p-6 mb-8 card-hover">
+        <h2 class="text-2xl md:text-3xl font-bold text-green-600 text-center mb-4">Mission</h2>
+        <p class="text-gray-600 leading-relaxed">
+          Our mission is to develop an accurate, reliable, and accessible deep learning-based system for skin lesion analysis. We aim to assist dermatologists and individuals by providing real-time classification of skin conditions, empowering early diagnosis and improving global skin health awareness.
+        </p>
+      </div>
+
+      <!-- Team Section -->
+      <div id="team-section" class="section-content bg-yellow-50 border-2 border-blue-900 rounded-lg p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-blue-600 text-center mb-6">Our Team</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div class="bg-white border-2 border-blue-900 rounded-lg p-4 text-center card-hover">
+            <img src="static/images/Somesh.jpg" alt="Member 1" class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Somesh Alone</h3>
+            <a href="https://www.linkedin.com/in/someshalone?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" class="text-blue-500 hover:underline">LinkedIn Profile</a>
+          </div>
+          <div class="bg-white border-2 border-blue-900 rounded-lg p-4 text-center card-hover">
+            <img src="static/images/yadnesh.jpg" alt="Member 2" class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Yadnyesh Pande</h3>
+            <a href="https://www.linkedin.com/in/yadnyesh-pande-433a43258" target="_blank" class="text-blue-500 hover:underline">LinkedIn Profile</a>
+          </div>
+          <div class="bg-white border-2 border-blue-900 rounded-lg p-4 text-center card-hover">
+            <img src="static/images/pratik.jpg" alt="Member 3" class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Pratik Papanwar</h3>
+            <a href="https://www.linkedin.com/in/pratik-p-b44027202/" target="_blank" class="text-blue-500 hover:underline">LinkedIn Profile</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+          <ul class="space-y-2">
+            <li><a href="{{ url_for('home') }}" class="hover:text-blue-400 transition">Home</a></li>
+            <li><a href="{{ url_for('about') }}" class="hover:text-blue-400 transition">About</a></li>
+            <li><a href="{{ url_for('predict') }}" class="hover:text-blue-400 transition">Prediction</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Contact Info</h3>
+          <p class="flex items-center mb-2"><span class="mr-2">📧</span> Demo@Gmail.Com</p>
+          <p class="flex items-center mb-2"><span class="mr-2">📍</span> Nanded, India - 431604</p>
+          <p class="flex items-center mb-2"><span class="mr-2">📞</span> +860-008-1776</p>
+          <p class="flex items-center"><span class="mr-2">📞</span> +914-655-7166</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
+          <p class="flex items-center mb-2"><span class="mr-2">📷</span> <a href="#" class="hover:text-blue-400 transition">Instagram</a></p>
+          <p class="flex items-center mb-2"><span class="mr-2">📘</span> <a href="#" class="hover:text-blue-400 transition">Facebook</a></p>
+          <p class="flex items-center"><span class="mr-2">🐦</span> <a href="#" class="hover:text-blue-400 transition">Twitter</a></p>
+        </div>
+      </div>
+      <div class="mt-8 text-center text-gray-400">
+        <p>© 2025 Skin Lesion Detection. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Mobile Menu Toggle Script -->
+  <script>
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  </script>
+</body>
+</html>

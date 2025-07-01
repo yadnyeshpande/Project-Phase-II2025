@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skin Lesion Prediction</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .nav-link:hover { color: #3b82f6; transition: color 0.3s ease; }
+    .section-content { animation: fadeIn 1s ease-in-out; }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    .predict-btn:hover {
+      background-color: #2563eb;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex-shrink-0">
+          <a href="{{ url_for('home') }}" class="text-2xl font-bold text-blue-600">Skin Lesion Detection</a>
+        </div>
+        <div class="hidden md:flex space-x-8">
+          <a href="{{ url_for('home') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">Home</a>
+          <a href="{{ url_for('about') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">About</a>
+          <a href="{{ url_for('predict') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">Prediction</a>
+        </div>
+        <!-- Mobile Menu Button -->
+        <div class="md:hidden">
+          <button id="mobile-menu-button" class="text-gray-700 hover:text-blue-500 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white shadow-md">
+      <div class="px-4 pt-2 pb-3 space-y-1">
+        <a href="{{ url_for('home') }}" class="block text-gray-700 hover:text-blue-500 font-medium">Home</a>
+        <a href="{{ url_for('about') }}" class="block text-gray-700 hover:text-blue-500 font-medium">About</a>
+        <a href="{{ url_for('predict') }}" class="block text-gray-700 hover:text-blue-500 font-medium">Prediction</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Prediction Section -->
+  <section class="py-16">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="section-content bg-white rounded-lg p-8 shadow-md card-hover">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-6">Upload Images for Prediction</h1>
+        <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+          <input type="text" name="patient_name" placeholder="Patient Name" required class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="number" name="patient_age" placeholder="Age" required class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="text" name="blood_group" placeholder="Blood Group" required class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="file" name="images" multiple required class="p-3 border border-gray-300 rounded-lg bg-white cursor-pointer">
+          <input type="submit" value="Predict" class="predict-btn p-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition cursor-pointer">
+        </form>
+
+        {% if results %}
+          <div class="mt-8 bg-green-50 border-l-4 border-green-500 rounded-lg p-6">
+            {% for result in results %}
+              <div class="mb-6 last:mb-0">
+                <h2 class="text-xl font-semibold text-gray-800">Prediction: 
+                  <span class="{% if result.label == 'Unknown / Not a skin lesion' %}text-red-600{% else %}text-green-600{% endif %} font-bold">{{ result.label }}</span>
+                </h2>
+                <h3 class="text-lg text-gray-600">Confidence: <span class="text-green-600 font-bold">{{ result.confidence }}%</span></h3>
+                <img src="{{ url_for('static', filename='uploads/' ~ result.image) }}" alt="Uploaded Image" class="mt-4 w-full h-auto rounded-lg border border-gray-300">
+                {% if result.label == "Unknown / Not a skin lesion" %}
+                  <p class="text-red-500 font-semibold mt-4">⚠️ This image does not match any known skin disease class.</p>
+                {% else %}
+                  <a href="{{ url_for('download_report') }}" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">Download PDF Report</a>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+          <ul class="space-y-2">
+            <li><a href="{{ url_for('home') }}" class="hover:text-blue-400 transition">Home</a></li>
+            <li><a href="{{ url_for('about') }}" class="hover:text-blue-400 transition">About</a></li>
+            <li><a href="{{ url_for('predict') }}" class="hover:text-blue-400 transition">Prediction</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Contact Info</h3>
+          <p class="flex items-center mb-2"><span class="mr-2">📧</span> Demo@Gmail.Com</p>
+          <p class="flex items-center mb-2"><span class="mr-2">📍</span> Nanded, India - 400104</p>
+          <p class="flex items-center mb-2"><span class="mr-2">📞</span> +860-008-1776</p>
+          <p class="flex items-center"><span class="mr-2">📞</span> +914-655-7166</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
+          <p class="flex items-center mb-2"><span class="mr-2">📷</span> <a href="#" class="hover:text-blue-400 transition">Instagram</a></p>
+          <p class="flex items-center mb-2"><span class="mr-2">📘</span> <a href="#" class="hover:text-blue-400 transition">Facebook</a></p>
+          <p class="flex items-center"><span class="mr-2">🐦</span> <a href="#" class="hover:text-blue-400 transition">Twitter</a></p>
+        </div>
+      </div>
+      <div class="mt-8 text-center text-gray-400">
+        <p>© 2025 Skin Lesion Detection. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Mobile Menu Toggle Script + Form Validation -->
+  <script>
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    document.querySelector('form').addEventListener('submit', function (e) {
+      const name = document.querySelector('input[name="patient_name"]').value.trim();
+      const age = document.querySelector('input[name="patient_age"]').value.trim();
+
+      const nameRegex = /^[A-Za-z\s]+$/;
+      if (!nameRegex.test(name)) {
+        alert("Please enter a valid patient name (letters only).");
+        e.preventDefault();
+        return;
+      }
+
+      const ageRegex = /^[1-9][0-9]*$/;
+      if (!ageRegex.test(age)) {
+        alert("Please enter a valid positive age (numbers only).");
+        e.preventDefault();
+        return;
+      }
+    });
+  </script>
+</body>
+</html>

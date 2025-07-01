@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Skin Lesion Analysis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+    .hero-gradient {
+      background-image: url('../static/images/image3.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+    .nav-link:hover {
+      color: #3b82f6;
+      transition: color 0.3s ease;
+    }
+    .hero-text {
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex-shrink-0">
+          <a href="{{ url_for('home') }}" class="text-2xl font-bold text-blue-600">Skin Lesion Detection</a>
+        </div>
+        <div class="hidden md:flex space-x-8">
+          <a href="{{ url_for('home') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">Home</a>
+          <a href="{{ url_for('about') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">About</a>
+          <a href="{{ url_for('predict') }}" class="nav-link text-gray-700 hover:text-blue-500 font-medium">Prediction</a>
+        </div>
+        <!-- Mobile Menu Button -->
+        <div class="md:hidden">
+          <button id="mobile-menu-button" class="text-gray-700 hover:text-blue-500 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white shadow-md">
+      <div class="px-4 pt-2 pb-3 space-y-1">
+        <a href="{{ url_for('home') }}" class="block text-gray-700 hover:text-blue-500 font-medium">Home</a>
+        <a href="{{ url_for('about') }}" class="block text-gray-700 hover:text-blue-500 font-medium">About</a>
+        <a href="{{ url_for('predict') }}" class="block text-gray-700 hover:text-blue-500 font-medium">Prediction</a>
+      </div> 
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-gradient h-96 flex items-center justify-center text-white">
+    <div class="hero-text text-center max-w-2xl px-4">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">Skin Lesion Analysis</h1>
+      <p class="text-lg md:text-xl">Early Detection of Skin Diseases Using a Deep Learning-Based Image Classification Model</p>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center gap-8">
+        <div class="md:w-1/2">
+          <h2 class="text-3xl font-bold text-gray-800 mb-4">About This Project</h2>
+          <p class="text-gray-600 leading-relaxed">
+            This machine learning-based system analyzes skin lesion images and classifies them into different disease categories. 
+            It is built using deep learning techniques to assist dermatologists and individuals in the early detection of melanoma 
+            and other skin conditions. Our model is trained on the HAM10000 dataset to achieve high accuracy and reliability in skin 
+            disease classification.
+          </p>
+        </div>
+        <div class="md:w-1/2">
+          <img src="static/images/image1.png" alt="Skin Analysis" class="rounded-lg shadow-md w-full h-auto" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+          <ul class="space-y-2">
+            <li><a href="{{ url_for('home') }}" class="hover:text-blue-400 transition">Home</a></li>
+            <li><a href="{{ url_for('about') }}" class="hover:text-blue-400 transition">About</a></li>
+            <li><a href="{{ url_for('predict') }}" class="hover:text-blue-400 transition">Prediction</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Contact Info</h3>
+          <p class="flex items-center mb-2"><span class="mr-2">📧</span> Demo@Gmail.Com</p>
+          <p class="flex items-center mb-2"><span class="mr-2">📍</span> Nanded, India - 400104</p>
+          <p class="flex items-center mb-2"><span class="mr-2">📞</span> +860-008-1776</p>
+          <p class="flex items-center"><span class="mr-2">📞</span> +914-655-7166</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Follow Us</h3>
+          <p class="flex items-center mb-2"><span class="mr-2">📷</span> <a href="#" class="hover:text-blue-400 transition">Instagram</a></p>
+          <p class="flex items-center mb-2"><span class="mr-2">📘</span> <a href="#" class="hover:text-blue-400 transition">Facebook</a></p>
+          <p class="flex items-center"><span class="mr-2">🐦</span> <a href="#" class="hover:text-blue-400 transition">Twitter</a></p>
+        </div>
+      </div>
+      <div class="mt-8 text-center text-gray-400">
+        <p>© 2025 Skin Lesion Detection. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript for Mobile Menu Toggle -->
+  <script>
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  </script>
+</body>
+</html>
